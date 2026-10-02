@@ -8,8 +8,87 @@
     {
       "id": "setup",
       "code_hash": "1d0db38904205bec4d6f6f6a1f6cec3e",
-      "outputs": [],
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
       "console": []
+    },
+    {
+      "id": "iUrV",
+      "code_hash": "493777bd169aabd82afa4bcbeb6f0c98",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "rhhF",
+      "code_hash": "f168a42ff5b49f326c83b3cf87c87a5a",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "LqKy",
+      "code_hash": "8b2e78edce868f25db7f4510e0ce149c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "uxJi",
+      "code_hash": "02bbfc60b2b1b3c2b4ecc662e4ba55eb",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "qqwJ",
+      "code_hash": "58f6ec0268ac81f09639b09b85bf788f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "application/json": "[{\"turma\": \"7\\u00baA\", \"disciplina\": \"Matem\\u00e1tica\", \"professor\": \"Prof. Ana\", \"dia\": \"Seg\", \"periodo\": 1, \"sala\": \"Sala Normal #1\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Matem\\u00e1tica\", \"professor\": \"Prof. Ana\", \"dia\": \"Ter\", \"periodo\": 1, \"sala\": \"Sala Normal #1\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Matem\\u00e1tica\", \"professor\": \"Prof. Ana\", \"dia\": \"Qua\", \"periodo\": 5, \"sala\": \"Sala Normal #4\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Matem\\u00e1tica\", \"professor\": \"Prof. Ana\", \"dia\": \"Qui\", \"periodo\": 4, \"sala\": \"Sala Normal #4\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Portugu\\u00eas\", \"professor\": \"Prof. Bruno\", \"dia\": \"Seg\", \"periodo\": 4, \"sala\": \"Sala Normal #3\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Portugu\\u00eas\", \"professor\": \"Prof. Bruno\", \"dia\": \"Ter\", \"periodo\": 4, \"sala\": \"Sala Normal #2\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Portugu\\u00eas\", \"professor\": \"Prof. Bruno\", \"dia\": \"Qua\", \"periodo\": 4, \"sala\": \"Sala Normal #3\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Portugu\\u00eas\", \"professor\": \"Prof. Bruno\", \"dia\": \"Qui\", \"periodo\": 5, \"sala\": \"Sala Normal #6\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Ci\\u00eancias\", \"professor\": \"Prof. Carla\", \"dia\": \"Seg\", \"periodo\": 5, \"sala\": \"Laborat\\u00f3rio #1\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Ci\\u00eancias\", \"professor\": \"Prof. Carla\", \"dia\": \"Qui\", \"periodo\": 1, \"sala\": \"Laborat\\u00f3rio #1\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Ci\\u00eancias\", \"professor\": \"Prof. Carla\", \"dia\": \"Sex\", \"periodo\": 1, \"sala\": \"Laborat\\u00f3rio #1\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Hist\\u00f3ria\", \"professor\": \"Prof. Diana\", \"dia\": \"Qua\", \"periodo\": 3, \"sala\": \"Sala Normal #6\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Hist\\u00f3ria\", \"professor\": \"Prof. Diana\", \"dia\": \"Sex\", \"periodo\": 2, \"sala\": \"Sala Normal #4\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Ingl\\u00eas\", \"professor\": \"Prof. Diana\", \"dia\": \"Ter\", \"periodo\": 5, \"sala\": \"Sala Normal #1\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Ingl\\u00eas\", \"professor\": \"Prof. Diana\", \"dia\": \"Qua\", \"periodo\": 1, \"sala\": \"Sala Normal #2\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Educa\\u00e7\\u00e3o F\\u00edsica\", \"professor\": \"Prof. Eduardo\", \"dia\": \"Sex\", \"periodo\": 4, \"sala\": \"Gin\\u00e1sio #1\"}, {\"turma\": \"7\\u00baA\", \"disciplina\": \"Educa\\u00e7\\u00e3o F\\u00edsica\", \"professor\": \"Prof. Eduardo\", \"dia\": \"Sex\", \"periodo\": 5, \"sala\": \"Gin\\u00e1sio #1\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Matem\\u00e1tica\", \"professor\": \"Prof. Ana\", \"dia\": \"Seg\", \"periodo\": 4, \"sala\": \"Sala Normal #4\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Matem\\u00e1tica\", \"professor\": \"Prof. Ana\", \"dia\": \"Qua\", \"periodo\": 4, \"sala\": \"Sala Normal #1\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Matem\\u00e1tica\", \"professor\": \"Prof. Ana\", \"dia\": \"Qui\", \"periodo\": 5, \"sala\": \"Sala Normal #5\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Matem\\u00e1tica\", \"professor\": \"Prof. Ana\", \"dia\": \"Sex\", \"periodo\": 5, \"sala\": \"Sala Normal #6\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Portugu\\u00eas\", \"professor\": \"Prof. Bruno\", \"dia\": \"Seg\", \"periodo\": 5, \"sala\": \"Sala Normal #6\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Portugu\\u00eas\", \"professor\": \"Prof. Bruno\", \"dia\": \"Qua\", \"periodo\": 5, \"sala\": \"Sala Normal #1\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Portugu\\u00eas\", \"professor\": \"Prof. Bruno\", \"dia\": \"Qui\", \"periodo\": 4, \"sala\": \"Sala Normal #1\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Portugu\\u00eas\", \"professor\": \"Prof. Bruno\", \"dia\": \"Sex\", \"periodo\": 3, \"sala\": \"Sala Normal #6\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Ci\\u00eancias\", \"professor\": \"Prof. Carla\", \"dia\": \"Seg\", \"periodo\": 2, \"sala\": \"Laborat\\u00f3rio #1\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Ci\\u00eancias\", \"professor\": \"Prof. Carla\", \"dia\": \"Ter\", \"periodo\": 3, \"sala\": \"Laborat\\u00f3rio #1\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Ci\\u00eancias\", \"professor\": \"Prof. Carla\", \"dia\": \"Sex\", \"periodo\": 2, \"sala\": \"Laborat\\u00f3rio #1\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Hist\\u00f3ria\", \"professor\": \"Prof. Diana\", \"dia\": \"Qui\", \"periodo\": 3, \"sala\": \"Sala Normal #1\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Hist\\u00f3ria\", \"professor\": \"Prof. Diana\", \"dia\": \"Sex\", \"periodo\": 4, \"sala\": \"Sala Normal #5\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Ingl\\u00eas\", \"professor\": \"Prof. Diana\", \"dia\": \"Qua\", \"periodo\": 2, \"sala\": \"Sala Normal #1\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Ingl\\u00eas\", \"professor\": \"Prof. Diana\", \"dia\": \"Sex\", \"periodo\": 1, \"sala\": \"Sala Normal #3\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Educa\\u00e7\\u00e3o F\\u00edsica\", \"professor\": \"Prof. Eduardo\", \"dia\": \"Ter\", \"periodo\": 4, \"sala\": \"Gin\\u00e1sio #1\"}, {\"turma\": \"7\\u00baB\", \"disciplina\": \"Educa\\u00e7\\u00e3o F\\u00edsica\", \"professor\": \"Prof. Eduardo\", \"dia\": \"Ter\", \"periodo\": 5, \"sala\": \"Gin\\u00e1sio #1\"}]"
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Estado: OPTIMAL\n",
+          "mimetype": "text/plain"
+        }
+      ]
     }
   ]
 }
