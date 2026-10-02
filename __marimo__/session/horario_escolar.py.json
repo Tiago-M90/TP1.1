@@ -2,7 +2,7 @@
   "version": "1",
   "metadata": {
     "marimo_version": "0.25.0",
-    "script_metadata_hash": "cdac4f193ea60f385129ed849f93ec6c"
+    "script_metadata_hash": "dd1e7c62eaf7480e17a2a36a853d7fd4"
   },
   "cells": [
     {
@@ -19,7 +19,20 @@
       "console": []
     },
     {
-      "id": "iUrV",
+      "id": "Hbol",
+      "code_hash": "7fa03c43fff90855d9f7de9817b063e0",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"tp11-gerador-de-horario-escolar\">TP1.1 \u2014 Gerador de Hor\u00e1rio Escolar</h1>\n<h2 id=\"objetivo-e-abordagem\">Objetivo e abordagem</h2>\n<span class=\"paragraph\">O objetivo \u00e9 construir um hor\u00e1rio semanal a partir de ficheiros CSV, respeitando as restri\u00e7\u00f5es obrigat\u00f3rias <strong>R1\u2013R8</strong>, minimizando os <strong>buracos dos professores (O1)</strong> e permitindo <strong>repara\u00e7\u00e3o incremental (R9)</strong> quando os recursos mudam.</span>\n<span class=\"paragraph\">A solu\u00e7\u00e3o foi modelada como um problema de satisfa\u00e7\u00e3o e otimiza\u00e7\u00e3o com <strong>OR-Tools CP-SAT</strong>. Esta escolha segue a abordagem de aloca\u00e7\u00e3o estudada na disciplina: as decis\u00f5es s\u00e3o representadas por vari\u00e1veis booleanas e as condi\u00e7\u00f5es do hor\u00e1rio por restri\u00e7\u00f5es. O CP-SAT permite ainda definir fun\u00e7\u00f5es objetivo e reutilizar uma solu\u00e7\u00e3o anterior atrav\u00e9s de <em>hints</em>, o que \u00e9 \u00fatil em O1 e R9.</span>\n<span class=\"paragraph\">Os dados concretos de turmas, disciplinas, professores e salas <strong>n\u00e3o s\u00e3o escritos no modelo</strong>. S\u00e3o lidos de <code>dados/</code>, <code>dados_v2/</code> e, no teste adicional de repara\u00e7\u00e3o, de <code>dados_reparo/</code>.</span>\n<h3 id=\"requisitos-considerados\">Requisitos considerados</h3>\n<ul>\n<li><strong>R1:</strong> uma turma n\u00e3o pode ter duas aulas simult\u00e2neas.</li>\n<li><strong>R2:</strong> cada turma cumpre exatamente a carga semanal de cada disciplina.</li>\n<li><strong>R3:</strong> existe no m\u00e1ximo uma ocorr\u00eancia da mesma disciplina por dia.</li>\n<li><strong>R4:</strong> disciplinas de duplo per\u00edodo s\u00e3o dadas em blocos de dois per\u00edodos consecutivos.</li>\n<li><strong>R5:</strong> um professor n\u00e3o pode dar duas aulas simultaneamente.</li>\n<li><strong>R6:</strong> os professores s\u00f3 podem ser colocados em per\u00edodos dispon\u00edveis.</li>\n<li><strong>R7:</strong> a sala tem de ser adequada e n\u00e3o pode receber duas aulas simultaneamente.</li>\n<li><strong>R8:</strong> os dados s\u00e3o lidos dos CSV e a solu\u00e7\u00e3o n\u00e3o depende dos valores concretos do exemplo.</li>\n<li><strong>O1:</strong> minimizar o n\u00famero total de per\u00edodos livres entre a primeira e a \u00faltima aula di\u00e1ria de cada professor.</li>\n<li><strong>R9:</strong> adaptar um hor\u00e1rio existente a pequenas altera\u00e7\u00f5es, preservando o maior n\u00famero poss\u00edvel de aloca\u00e7\u00f5es antigas.</li>\n</ul>\n<span class=\"paragraph\">As decis\u00f5es de implementa\u00e7\u00e3o que n\u00e3o v\u00eam diretamente do enunciado s\u00e3o identificadas ao longo do relat\u00f3rio e resumidas na matriz de rastreabilidade final.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
       "code_hash": "493777bd169aabd82afa4bcbeb6f0c98",
       "outputs": [
         {
@@ -32,7 +45,20 @@
       "console": []
     },
     {
-      "id": "rhhF",
+      "id": "vblA",
+      "code_hash": "10a7503535dbc562df33325d7ad664ff",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"modelacao-de-r1r8\">Modela\u00e7\u00e3o de R1\u2013R8</h2>\n<h3 id=\"dados-e-decisoes-de-representacao\">Dados e decis\u00f5es de representa\u00e7\u00e3o</h3>\n<span class=\"paragraph\">Sejam <code>T</code> as turmas, <code>C</code> as disciplinas, <code>D</code> os dias, <code>P</code> os per\u00edodos e <code>S</code> as salas concretas.</span>\n<span class=\"paragraph\">A vari\u00e1vel principal \u00e9</span>\n<marimo-tex class=\"arithmatex\">||[\nx_{t,c,d,p,s} \\in \\{0,1\\},\n||]</marimo-tex><span class=\"paragraph\">com <code>x = 1</code> se a turma <code>t</code> tiver a disciplina <code>c</code>, no dia <code>d</code>, per\u00edodo <code>p</code>, na sala <code>s</code>.</span>\n<span class=\"paragraph\"><strong>D1 \u2014 salas concretas.</strong> Uma linha de <code>salas.csv</code> com <code>quantidade = q</code> \u00e9 expandida em <code>q</code> salas equivalentes, por exemplo <code>Sala Normal #1</code>, ..., <code>Sala Normal #q</code>. Os identificadores s\u00e3o internos; servem para aplicar diretamente a capacidade de R7 e para comparar salas em R9.</span>\n<span class=\"paragraph\"><strong>D2 \u2014 vari\u00e1vel principal.</strong> Foi escolhida a matriz bin\u00e1ria <code>x</code> por ser pr\u00f3xima da formula\u00e7\u00e3o de aloca\u00e7\u00e3o usada na disciplina. A vari\u00e1vel auxiliar <code>y[t,c,d,p]</code> indica apenas a ocupa\u00e7\u00e3o temporal da turma/disciplina, independentemente da sala.</span>\n<span class=\"paragraph\"><strong>D3 \u2014 blocos duplos.</strong> R4 exige dois per\u00edodos consecutivos, mas n\u00e3o exige que os dois per\u00edodos usem a mesma sala. N\u00e3o foi acrescentada essa restri\u00e7\u00e3o extra.</span>\n<span class=\"paragraph\"><strong>D4 \u2014 valida\u00e7\u00e3o estrutural.</strong> Antes de construir o modelo rejeita-se uma disciplina marcada como <code>duplo_periodo = sim</code> com carga semanal \u00edmpar. Esta \u00e9 uma decis\u00e3o de qualidade dos dados e n\u00e3o uma nova interpreta\u00e7\u00e3o de R8.</span>\n<h3 id=\"restricoes\">Restri\u00e7\u00f5es</h3>\n<ul>\n<li><strong>R1:</strong> para cada turma e slot, <code>sum(x) &lt;= 1</code>.</li>\n<li><strong>R2:</strong> para cada turma/disciplina, a soma semanal de <code>x</code> \u00e9 exatamente a carga indicada no CSV.</li>\n<li><strong>R3:</strong> disciplinas normais t\u00eam no m\u00e1ximo um per\u00edodo por dia; disciplinas duplas t\u00eam no m\u00e1ximo um bloco por dia.</li>\n<li><strong>R4:</strong> a vari\u00e1vel bin\u00e1ria <code>b[t,c,d,p]</code> representa o in\u00edcio de um bloco duplo e liga <code>y</code> a exatamente dois per\u00edodos consecutivos.</li>\n<li><strong>R5:</strong> para cada professor e slot, a soma das suas aulas \u00e9 no m\u00e1ximo 1.</li>\n<li><strong>R6:</strong> se <code>(professor,dia,periodo)</code> estiver nas exce\u00e7\u00f5es de disponibilidade, a respetiva ocupa\u00e7\u00e3o \u00e9 for\u00e7ada a 0.</li>\n<li><strong>R7:</strong> vari\u00e1veis associadas a salas incompat\u00edveis s\u00e3o for\u00e7adas a 0; cada sala concreta recebe no m\u00e1ximo uma aula por slot.</li>\n<li><strong>R8:</strong> o modelo \u00e9 constru\u00eddo a partir dos CSV, sem listas de turmas, disciplinas ou professores concretos no c\u00f3digo.</li>\n</ul></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
       "code_hash": "f168a42ff5b49f326c83b3cf87c87a5a",
       "outputs": [
         {
@@ -45,7 +71,33 @@
       "console": []
     },
     {
-      "id": "LqKy",
+      "id": "lEQa",
+      "code_hash": "541f3dc001030f42948e97908f238917",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"objetivo-o1-minimizar-buracos\">Objetivo O1 \u2014 minimizar buracos</h2>\n<span class=\"paragraph\">A defini\u00e7\u00e3o de <strong>buraco</strong> vem do enunciado: \u00e9 cada per\u00edodo livre entre a primeira e a \u00faltima aula di\u00e1ria de um professor.</span>\n<span class=\"paragraph\"><strong>D5 \u2014 decis\u00e3o de modela\u00e7\u00e3o.</strong> O objetivo \u00e9 representado por quatro fam\u00edlias de vari\u00e1veis booleanas:</span>\n<ul>\n<li><code>ocupado[f,d,p]</code>: o professor tem uma aula nesse slot;</li>\n<li><code>tem_antes[f,d,p]</code>: existe pelo menos uma aula anterior nesse dia;</li>\n<li><code>tem_depois[f,d,p]</code>: existe pelo menos uma aula posterior nesse dia;</li>\n<li><code>buraco[f,d,p]</code>: existe aula antes e depois, mas o pr\u00f3prio per\u00edodo est\u00e1 livre.</li>\n</ul>\n<span class=\"paragraph\">As restri\u00e7\u00f5es implementam equival\u00eancias, e n\u00e3o apenas implica\u00e7\u00f5es, para impedir que o solver escolha valores artificiais para diminuir o objetivo. Em particular,</span>\n<marimo-tex class=\"arithmatex\">||[\nburaco \\iff tem\\_antes \\land tem\\_depois \\land \\neg ocupado.\n||]</marimo-tex><span class=\"paragraph\">A fun\u00e7\u00e3o objetivo \u00e9</span>\n<marimo-tex class=\"arithmatex\">||[\n\\min \\sum_{f,d,p} buraco_{f,d,p}.\n||]</marimo-tex><span class=\"paragraph\">R1\u2013R8 permanecem inalterados; O1 \u00e9 acrescentado ao modelo base.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "PKri",
+      "code_hash": "b02f9d2d7eff7c66742030fe8c14a5a5",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Xref",
       "code_hash": "8b2e78edce868f25db7f4510e0ce149c",
       "outputs": [
         {
@@ -58,7 +110,7 @@
       "console": []
     },
     {
-      "id": "uxJi",
+      "id": "SFPL",
       "code_hash": "02bbfc60b2b1b3c2b4ecc662e4ba55eb",
       "outputs": [
         {
@@ -71,7 +123,20 @@
       "console": []
     },
     {
-      "id": "qqwJ",
+      "id": "BYtC",
+      "code_hash": "349883890118836a477112ea52461e26",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"execucao-inicial-e-validacao\">Execu\u00e7\u00e3o inicial e valida\u00e7\u00e3o</h2>\n<span class=\"paragraph\">Primeiro resolve-se apenas o problema de satisfa\u00e7\u00e3o R1\u2013R8 sobre <code>dados/</code>. Esta execu\u00e7\u00e3o permite testar a formula\u00e7\u00e3o e produzir um hor\u00e1rio de refer\u00eancia antes de acrescentar O1. O estado e o hor\u00e1rio obtidos s\u00e3o apresentados diretamente pela c\u00e9lula seguinte; como ainda n\u00e3o existe fun\u00e7\u00e3o objetivo, um estado <code>OPTIMAL</code> nesta fase n\u00e3o significa que os buracos tenham sido otimizados.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "RGSE",
       "code_hash": "58f6ec0268ac81f09639b09b85bf788f",
       "outputs": [
         {
@@ -89,6 +154,302 @@
           "mimetype": "text/plain"
         }
       ]
+    },
+    {
+      "id": "Kclp",
+      "code_hash": "d50fd96db38db81d2952e6c918b89bee",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"validacao-independente\">Valida\u00e7\u00e3o independente</h2>\n<span class=\"paragraph\">Uma solu\u00e7\u00e3o devolvida pelo solver n\u00e3o \u00e9 aceite sem verifica\u00e7\u00e3o adicional. O validador abaixo rel\u00ea os CSV e verifica diretamente o hor\u00e1rio extra\u00eddo, sem consultar o modelo CP-SAT, as vari\u00e1veis <code>x</code>, <code>y</code>, <code>b</code> ou o estado do solver.</span>\n<span class=\"paragraph\">S\u00e3o verificados R1\u2013R7 e a consist\u00eancia do resultado com os CSV para R8. A aus\u00eancia de <em>hardcoding</em> \u00e9 testada mais adiante atrav\u00e9s de um conjunto alternativo de CSV. Os resultados da valida\u00e7\u00e3o s\u00e3o sempre produzidos pelas c\u00e9lulas de execu\u00e7\u00e3o, evitando copiar manualmente estados ou contagens para o texto do relat\u00f3rio.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "emfo",
+      "code_hash": "4d04661ed28164cc691bea8cc1d0ab05",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Hstk",
+      "code_hash": "a0afbdf12d8fb31bd1db7132df05d317",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nWHF",
+      "code_hash": "416f481fe3912efa1ebf2dfde2b6c05d",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "iLit",
+      "code_hash": "b71536f6c7e59bd2ed46f2bab987cf09",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "R1: OK\nR2: OK\nR3: OK\nR4: OK\nR5: OK\nR6: OK\nR7: OK\nR8: OK (consist\u00eancia com os CSV)\nR1-R7: V\u00c1LIDO\nR8 - consist\u00eancia com CSV: OK\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "ZHCJ",
+      "code_hash": "57c2b963a4c2b4fd0f61b8107f0a6ce7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"testes-negativos-do-validador\">Testes negativos do validador</h2>\n<span class=\"paragraph\">Al\u00e9m da valida\u00e7\u00e3o positiva, s\u00e3o criados hor\u00e1rios deliberadamente inv\u00e1lidos para confirmar que o validador deteta viola\u00e7\u00f5es de R1\u2013R8. Estes testes s\u00e3o intencionalmente simples: n\u00e3o tentam isolar sempre uma \u00fanica restri\u00e7\u00e3o. O crit\u00e9rio de sucesso \u00e9 o requisito alvo aparecer como violado; eventuais viola\u00e7\u00f5es colaterais s\u00e3o mostradas no output.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ROlb",
+      "code_hash": "ab1cddd21cb74a107e0091acfc7ab6d3",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "TESTES NEGATIVOS\n------------------------------------------------------------\nR1: OK | falhas: ['R1', 'R2', 'R3', 'R5', 'R7']\nR3: OK | falhas: ['R1', 'R2', 'R3', 'R5', 'R7']\nR5: OK | falhas: ['R1', 'R2', 'R3', 'R5', 'R7']\nR7: OK | falhas: ['R1', 'R2', 'R3', 'R5', 'R7']\nR2: OK | falhas: ['R2']\nR4: OK | falhas: ['R2', 'R4']\nR6: OK | falhas: ['R1', 'R4', 'R6']\nR8: OK | falhas: ['R8']\nTodos os requisitos alvo foram detetados: True\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "qnkX",
+      "code_hash": "223fdd52151eca5fac6fec7c8dabdc5c",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"execucao-de-o1\">Execu\u00e7\u00e3o de O1</h2>\n<span class=\"paragraph\">Reconstr\u00f3i-se o mesmo problema R1\u2013R8 e acrescenta-se apenas O1. O hor\u00e1rio otimizado \u00e9 novamente verificado pelo validador independente. A c\u00e9lula de compara\u00e7\u00e3o apresenta, a partir da execu\u00e7\u00e3o corrente, os buracos do hor\u00e1rio sem objetivo, os do hor\u00e1rio com O1, a soma das vari\u00e1veis <code>buraco</code> e o valor da fun\u00e7\u00e3o objetivo.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "TqIu",
+      "code_hash": "55e7a089156a064744716f40dec4e1f7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "Estado com O1: OPTIMAL\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "Vxnm",
+      "code_hash": "050269f4e2ec410252fc43a445ec98f5",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "R1: OK\nR2: OK\nR3: OK\nR4: OK\nR5: OK\nR6: OK\nR7: OK\nR8: OK (consist\u00eancia com os CSV)\nR1-R7: V\u00c1LIDO\nR8 - consist\u00eancia com CSV: OK\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "DnEU",
+      "code_hash": "43d683a0bd2364501f6be8c97c9fdc73",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "COMPARA\u00c7\u00c3O DE O1\n--------------------------------------------------\nBuracos sem objetivo: 5\nBuracos com O1 - contador independente: 0\nBuracos com O1 - vari\u00e1veis do modelo: 0\nFun\u00e7\u00e3o objetivo reportada pelo solver: 0\nRedu\u00e7\u00e3o observada: 5\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "ulZA",
+      "code_hash": "e38eae5cb7ad411a0d0b5a2d69298f0f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"r9-construcao-incremental\">R9 \u2014 constru\u00e7\u00e3o incremental</h2>\n<span class=\"paragraph\">R9 parte de um hor\u00e1rio existente <strong>H0</strong> e procura um novo hor\u00e1rio <strong>H1</strong> quando os recursos mudam. Nesta implementa\u00e7\u00e3o, <code>H0 = horario_o1</code>.</span>\n<span class=\"paragraph\"><strong>D6 \u2014 m\u00e9trica de altera\u00e7\u00e3o.</strong> Uma aloca\u00e7\u00e3o antiga \u00e9 um tempo letivo completo</span>\n<marimo-tex class=\"arithmatex\">||[\n(turma, disciplina, dia, periodo, sala).\n||]</marimo-tex><span class=\"paragraph\">Uma aloca\u00e7\u00e3o de H0 \u00e9 preservada se a mesma combina\u00e7\u00e3o existir em H1. Aulas novas que n\u00e3o existiam em H0 n\u00e3o contam como aulas antigas alteradas. Consequentemente, mover totalmente um bloco duplo conta como duas altera\u00e7\u00f5es.</span>\n<span class=\"paragraph\">Se <code>A0</code> \u00e9 o conjunto de aloca\u00e7\u00f5es de H0, o n\u00famero de altera\u00e7\u00f5es \u00e9</span>\n<marimo-tex class=\"arithmatex\">||[\nM(H0,H1)=|A0|-\\sum_{a\\in A0} x_a^{H1}.\n||]</marimo-tex><span class=\"paragraph\"><strong>D7 \u2014 estrat\u00e9gia incremental.</strong> O modelo de <code>dados_v2</code> minimiza explicitamente <code>M(H0,H1)</code> e recebe H0 tamb\u00e9m como <em>hint</em>. O <em>hint</em> \u00e9 apenas um ponto de partida sugerido ao solver; n\u00e3o \u00e9 uma restri\u00e7\u00e3o nem substitui a fun\u00e7\u00e3o objetivo.</span>\n<span class=\"paragraph\"><strong>D8 \u2014 rela\u00e7\u00e3o com O1.</strong> O1 n\u00e3o participa no objetivo de H1. Em R9 a prioridade desta experi\u00eancia \u00e9 preservar o hor\u00e1rio anterior, tal como permitido pelo enunciado.</span>\n<span class=\"paragraph\">Para compara\u00e7\u00e3o foi constru\u00edda uma <strong>baseline</strong> que resolve <code>dados_v2</code> desde zero apenas com R1\u2013R8, sem utilizar H0 durante a resolu\u00e7\u00e3o. As duas abordagens usam a mesma semente e uma \u00fanica <em>worker</em> para tornar a medi\u00e7\u00e3o mais reproduz\u00edvel.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "ecfG",
+      "code_hash": "3d6ce048452d6828256487baf498c5b0",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "Pvdt",
+      "code_hash": "1e69b127af935bf6493e41416dc49a17",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "R9 - CEN\u00c1RIO OFICIAL dados -> dados_v2\n------------------------------------------------------------\nIncremental | estado: OPTIMAL\nIncremental | tempo: 0.07996509999793489\nIncremental | WallTime: 0.07904810000000001\nIncremental | hints: {'hints_adicionados': 34, 'hints_ignorados': 0, 'alteracoes_forcadas': 0}\nIncremental | preservadas: 34\nIncremental | alteradas: 0\nIncremental | objetivo: 0\nIncremental | R1-R7: V\u00c1LIDO\nIncremental | R8 CSV: OK\n\nDesde zero | estado: OPTIMAL\nDesde zero | tempo: 0.11437909999949625\nDesde zero | WallTime: 0.1136337\nDesde zero | preservadas: 3\nDesde zero | alteradas: 31\nDesde zero | R1-R7: V\u00c1LIDO\nDesde zero | R8 CSV: OK\n\nDiferen\u00e7a de tempo (zero - incremental): 0.03441400000156136\nAltera\u00e7\u00f5es evitadas pelo incremental: 31\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "ZBYS",
+      "code_hash": "fae7d9e1779b25ef3c7d5674f213ae84",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h3 id=\"interpretacao-do-cenario-principal\">Interpreta\u00e7\u00e3o do cen\u00e1rio principal</h3>\n<span class=\"paragraph\">A c\u00e9lula anterior mostra os resultados efetivamente medidos para <code>dados \u2192 dados_v2</code>. A compara\u00e7\u00e3o relevante \u00e9 feita em duas dimens\u00f5es: tempo de resolu\u00e7\u00e3o e n\u00famero de aloca\u00e7\u00f5es antigas preservadas. Como a inst\u00e2ncia \u00e9 pequena e a medi\u00e7\u00e3o temporal corresponde a uma execu\u00e7\u00e3o, n\u00e3o se generaliza o desempenho a partir destes tempos. Os valores apresentados no output s\u00e3o a \u00fanica fonte dos resultados experimentais.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "aLJB",
+      "code_hash": "210da572bf2c484abbf8e2047cba06c7",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"cenario-controlado-de-reparacao\">Cen\u00e1rio controlado de repara\u00e7\u00e3o</h2>\n<span class=\"paragraph\">O cen\u00e1rio oficial pode n\u00e3o obrigar H0 a mudar. Para exercitar uma repara\u00e7\u00e3o real e, simultaneamente, testar R8 com outro conjunto de CSV, o notebook cria <code>dados_reparo/</code> a partir de <code>dados_v2/</code> e de uma aula real de H0.</span>\n<span class=\"paragraph\">As aulas s\u00e3o percorridas numa ordem determin\u00edstica, dando prioridade a disciplinas sem bloco duplo. Para cada candidata acrescenta-se uma indisponibilidade do respetivo professor exatamente nesse dia e per\u00edodo. Se a inst\u00e2ncia ficar invi\u00e1vel, passa-se \u00e0 candidata seguinte. \u00c9 usada a <strong>primeira candidata repar\u00e1vel</strong>, n\u00e3o a que produz menos altera\u00e7\u00f5es. Depois aplica-se exatamente a mesma fun\u00e7\u00e3o incremental usada em <code>dados_v2</code>.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "nHfw",
+      "code_hash": "b7f80e392db01e2ee2b6b5dcc171885b",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "xXTn",
+      "code_hash": "cd85ef57ca49e4a2a8f229fa2523accc",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": [
+        {
+          "type": "stream",
+          "name": "stdout",
+          "text": "CEN\u00c1RIO CONTROLADO DE REPARA\u00c7\u00c3O\n------------------------------------------------------------\nAula de H0 afetada: {'turma': '7\u00baA', 'disciplina': 'Matem\u00e1tica', 'professor': 'Prof. Ana', 'dia': 'Seg', 'periodo': 1, 'sala': 'Sala Normal #4'}\nNova indisponibilidade: {'professor': 'Prof. Ana', 'dia': 'Seg', 'periodo': 1}\nCandidatos testados: 1\nH0 perante dados_reparo | R6: FALHOU\nRestantes R1-R5, R7 e R8: OK\n\nH1 reparado | estado: OPTIMAL\nH1 reparado | tempo: 0.07837389999986044\nH1 reparado | hints: {'hints_adicionados': 34, 'hints_ignorados': 0, 'alteracoes_forcadas': 0}\nH1 reparado | preservadas: 33\nH1 reparado | alteradas: 1\nH1 reparado | objetivo: 1\nH1 reparado | R1-R7: V\u00c1LIDO\nH1 reparado | R8 CSV alternativo: OK\n",
+          "mimetype": "text/plain"
+        }
+      ]
+    },
+    {
+      "id": "AjVT",
+      "code_hash": "3b2e0a227fb5e3f659060d3ad9883a9b",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h2 id=\"matriz-de-rastreabilidade-final\">Matriz de rastreabilidade final</h2>\n<table>\n<thead>\n<tr>\n<th>Item</th>\n<th>Origem</th>\n<th>Decis\u00e3o de modela\u00e7\u00e3o / implementa\u00e7\u00e3o</th>\n<th>Contribui\u00e7\u00e3o da LLM</th>\n<th>Evid\u00eancia no notebook</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>R1</td>\n<td>Enunciado</td>\n<td>soma das aloca\u00e7\u00f5es da turma por slot <code>&lt;= 1</code></td>\n<td>formaliza\u00e7\u00e3o e c\u00f3digo</td>\n<td>validador positivo + teste negativo</td>\n</tr>\n<tr>\n<td>R2</td>\n<td>Enunciado</td>\n<td>carga semanal representada por igualdade exata</td>\n<td>formaliza\u00e7\u00e3o e c\u00f3digo</td>\n<td>validador positivo + teste negativo</td>\n</tr>\n<tr>\n<td>R3</td>\n<td>Enunciado</td>\n<td>normal: m\u00e1x. 1 per\u00edodo/dia; dupla: m\u00e1x. 1 bloco/dia</td>\n<td>formaliza\u00e7\u00e3o e c\u00f3digo</td>\n<td>validador positivo + teste negativo</td>\n</tr>\n<tr>\n<td>R4</td>\n<td>Enunciado</td>\n<td>in\u00edcio de bloco <code>b</code> e dois per\u00edodos consecutivos; D3 n\u00e3o exige mesma sala</td>\n<td>alternativas, formaliza\u00e7\u00e3o e c\u00f3digo</td>\n<td>validador positivo + teste negativo</td>\n</tr>\n<tr>\n<td>R5</td>\n<td>Enunciado</td>\n<td>m\u00e1x. 1 aula/professor/slot</td>\n<td>formaliza\u00e7\u00e3o e c\u00f3digo</td>\n<td>validador positivo + teste negativo</td>\n</tr>\n<tr>\n<td>R6</td>\n<td>Enunciado</td>\n<td>ocupa\u00e7\u00e3o proibida nas exce\u00e7\u00f5es dos CSV</td>\n<td>formaliza\u00e7\u00e3o e c\u00f3digo</td>\n<td>validador, teste negativo e <code>dados_reparo</code></td>\n</tr>\n<tr>\n<td>R7</td>\n<td>Enunciado</td>\n<td>D1 expande quantidades em salas concretas; compatibilidade + exclusividade</td>\n<td>proposta, discuss\u00e3o e c\u00f3digo</td>\n<td>validador positivo + teste negativo</td>\n</tr>\n<tr>\n<td>R8</td>\n<td>Enunciado</td>\n<td>leitura parametrizada dos CSV; D4 rejeita carga \u00edmpar numa disciplina dupla</td>\n<td>carregador, validador e testes</td>\n<td>consist\u00eancia nos CSV + conjunto alternativo <code>dados_reparo</code></td>\n</tr>\n<tr>\n<td>O1</td>\n<td>Enunciado</td>\n<td>D5: <code>ocupado</code>, <code>tem_antes</code>, <code>tem_depois</code>, <code>buraco</code></td>\n<td>formaliza\u00e7\u00e3o, equival\u00eancias e c\u00f3digo</td>\n<td>contador independente comparado com o objetivo</td>\n</tr>\n<tr>\n<td>R9</td>\n<td>Enunciado</td>\n<td>H0=<code>horario_o1</code>; D6 altera\u00e7\u00e3o por tempo letivo; D7 objetivo + hint; D8 O1 fora do objetivo</td>\n<td>alternativas, formaliza\u00e7\u00e3o e c\u00f3digo</td>\n<td>cen\u00e1rio oficial + cen\u00e1rio de repara\u00e7\u00e3o</td>\n</tr>\n</tbody>\n</table>\n<h2 id=\"limitacoes\">Limita\u00e7\u00f5es</h2>\n<ul>\n<li>As salas equivalentes recebem identificadores artificiais (<code>#1</code>, <code>#2</code>, ...), introduzindo simetria entre salas do mesmo tipo.</li>\n<li>A m\u00e9trica D6 conta altera\u00e7\u00f5es por tempo letivo; deslocar um bloco duplo completo conta como duas altera\u00e7\u00f5es.</li>\n<li>Os tempos de R9 s\u00e3o medidos numa inst\u00e2ncia pequena e numa execu\u00e7\u00e3o, pelo que n\u00e3o sustentam conclus\u00f5es gerais de desempenho.</li>\n<li>O formato atual dos CSV n\u00e3o representa a indisponibilidade de uma sala apenas em per\u00edodos espec\u00edficos.</li>\n<li>N\u00e3o foi realizada a experi\u00eancia de escala apresentada como extens\u00e3o opcional no enunciado espec\u00edfico.</li>\n</ul>\n<h2 id=\"reprodutibilidade\">Reprodutibilidade</h2>\n<span class=\"paragraph\">S\u00e3o necess\u00e1rios <code>horario_escolar.py</code> e as pastas <code>dados/</code> e <code>dados_v2/</code>. A pasta <code>dados_reparo/</code> \u00e9 recriada automaticamente durante a execu\u00e7\u00e3o. O cabe\u00e7alho declara <code>marimo</code> e <code>ortools</code>; as restantes bibliotecas usadas pertencem \u00e0 biblioteca standard de Python.</span>\n<span class=\"paragraph\">Antes da entrega devem ser confirmadas as vers\u00f5es reais do ambiente:</span>\n<div class=\"language-text codehilite\"><pre><span></span><code>python --version\npython -c &quot;import marimo, ortools; print(&#39;marimo&#39;, marimo.__version__); print(&#39;ortools&#39;, ortools.__version__)&quot;\n</code></pre></div>\n<span class=\"paragraph\">O ficheiro declara atualmente <code>requires-python = \"&gt;=3.14\"</code>; este valor deve ser confirmado com a vers\u00e3o efetivamente usada pelo grupo. Para a experi\u00eancia R9 usa-se semente fixa, uma \u00fanica <em>worker</em> e nenhum limite expl\u00edcito de tempo.</span>\n<h2 id=\"utilizacao-de-llm\">Utiliza\u00e7\u00e3o de LLM</h2>\n<span class=\"paragraph\">O c\u00f3digo Python deste notebook foi <strong>maioritariamente gerado com aux\u00edlio de uma LLM</strong>. As componentes geradas est\u00e3o identificadas por coment\u00e1rios <code>[LLM]</code>. A LLM apoiou a interpreta\u00e7\u00e3o dos requisitos, a formaliza\u00e7\u00e3o, a implementa\u00e7\u00e3o, os testes e a organiza\u00e7\u00e3o do relat\u00f3rio. As decis\u00f5es de modela\u00e7\u00e3o foram discutidas e revistas pelo grupo, e os resultados apresentados no notebook s\u00e3o produzidos pelas execu\u00e7\u00f5es efetuadas pelo grupo.</span>\n<span class=\"paragraph\"><strong>Liga\u00e7\u00e3o para o di\u00e1logo LLM usado no desenvolvimento:</strong> <code>[ADICIONAR LINK DA CONVERSA]</code></span>\n<h2 id=\"conclusao\">Conclus\u00e3o</h2>\n<span class=\"paragraph\">A solu\u00e7\u00e3o cobre R1\u2013R8, O1 e R9, com valida\u00e7\u00e3o independente e um conjunto alternativo de CSV. Os resultados quantitativos n\u00e3o s\u00e3o duplicados neste texto: ficam nos outputs das c\u00e9lulas que os calculam, evitando diverg\u00eancias entre o relat\u00f3rio e a execu\u00e7\u00e3o final.</span></span>"
+          }
+        }
+      ],
+      "console": []
     }
   ]
 }
