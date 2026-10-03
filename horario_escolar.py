@@ -19,30 +19,30 @@ with app.setup:
 def _():
     # [LLM] Texto introdutório e enquadramento do relatório.
     mo.md(r"""
-# TP1.1 — Gerador de Horário Escolar
+    # TP1.1 — Gerador de Horário Escolar
 
-## Objetivo e abordagem
+    ## Objetivo e abordagem
 
-O objetivo é construir um horário semanal a partir de ficheiros CSV, respeitando as restrições obrigatórias **R1–R8**, minimizando os **buracos dos professores (O1)** e permitindo **reparação incremental (R9)** quando os recursos mudam.
+    O objetivo é construir um horário semanal a partir de ficheiros CSV, respeitando as restrições obrigatórias **R1–R8**, minimizando os **buracos dos professores (O1)** e permitindo **reparação incremental (R9)** quando os recursos mudam.
 
-A solução foi modelada como um problema de satisfação e otimização com **OR-Tools CP-SAT**. Esta escolha segue a abordagem de alocação estudada na disciplina: as decisões são representadas por variáveis booleanas e as condições do horário por restrições. O CP-SAT permite ainda definir funções objetivo e reutilizar uma solução anterior através de *hints*, o que é útil em O1 e R9.
+    A solução foi modelada como um problema de satisfação e otimização com **OR-Tools CP-SAT**. Esta escolha segue a abordagem de alocação estudada na disciplina: as decisões são representadas por variáveis booleanas e as condições do horário por restrições. O CP-SAT permite ainda definir funções objetivo e reutilizar uma solução anterior através de *hints*, o que é útil em O1 e R9.
 
-Os dados concretos de turmas, disciplinas, professores e salas **não são escritos no modelo**. São lidos de `dados/`, `dados_v2/` e, no teste adicional de reparação, de `dados_reparo/`.
+    Os dados concretos de turmas, disciplinas, professores e salas **não são escritos no modelo**. São lidos de `dados/`, `dados_v2/` e, no teste adicional de reparação, de `dados_reparo/`.
 
-### Requisitos considerados
+    ### Requisitos considerados
 
-- **R1:** uma turma não pode ter duas aulas simultâneas.
-- **R2:** cada turma cumpre exatamente a carga semanal de cada disciplina.
-- **R3:** existe no máximo uma ocorrência da mesma disciplina por dia.
-- **R4:** disciplinas de duplo período são dadas em blocos de dois períodos consecutivos.
-- **R5:** um professor não pode dar duas aulas simultaneamente.
-- **R6:** os professores só podem ser colocados em períodos disponíveis.
-- **R7:** a sala tem de ser adequada e não pode receber duas aulas simultaneamente.
-- **R8:** os dados são lidos dos CSV e a solução não depende dos valores concretos do exemplo.
-- **O1:** minimizar o número total de períodos livres entre a primeira e a última aula diária de cada professor.
-- **R9:** adaptar um horário existente a pequenas alterações, preservando o maior número possível de alocações antigas.
+    - **R1:** uma turma não pode ter duas aulas simultâneas.
+    - **R2:** cada turma cumpre exatamente a carga semanal de cada disciplina.
+    - **R3:** existe no máximo uma ocorrência da mesma disciplina por dia.
+    - **R4:** disciplinas de duplo período são dadas em blocos de dois períodos consecutivos.
+    - **R5:** um professor não pode dar duas aulas simultaneamente.
+    - **R6:** os professores só podem ser colocados em períodos disponíveis.
+    - **R7:** a sala tem de ser adequada e não pode receber duas aulas simultaneamente.
+    - **R8:** os dados são lidos dos CSV e a solução não depende dos valores concretos do exemplo.
+    - **O1:** minimizar o número total de períodos livres entre a primeira e a última aula diária de cada professor.
+    - **R9:** adaptar um horário existente a pequenas alterações, preservando o maior número possível de alocações antigas.
 
-As decisões de implementação que não vêm diretamente do enunciado são identificadas ao longo do relatório e resumidas na matriz de rastreabilidade final.
+    As decisões de implementação que não vêm diretamente do enunciado são identificadas ao longo do relatório e resumidas na matriz de rastreabilidade final.
     """)
     return
 
@@ -149,45 +149,45 @@ def _():
             "periodos": PERIODOS,
         }
 
-    return DIAS, PERIODOS, Path, carregar_dados, cp_model, csv
+    return Path, carregar_dados, cp_model, csv
 
 
 @app.cell
 def _():
     # [LLM] Descrição da formulação lógica de R1-R8 e das decisões D1-D4.
     mo.md(r"""
-## Modelação de R1–R8
+    ## Modelação de R1–R8
 
-### Dados e decisões de representação
+    ### Dados e decisões de representação
 
-Sejam `T` as turmas, `C` as disciplinas, `D` os dias, `P` os períodos e `S` as salas concretas.
+    Sejam `T` as turmas, `C` as disciplinas, `D` os dias, `P` os períodos e `S` as salas concretas.
 
-A variável principal é
+    A variável principal é
 
-\[
-x_{t,c,d,p,s} \in \{0,1\},
-\]
+    \[
+    x_{t,c,d,p,s} \in \{0,1\},
+    \]
 
-com `x = 1` se a turma `t` tiver a disciplina `c`, no dia `d`, período `p`, na sala `s`.
+    com `x = 1` se a turma `t` tiver a disciplina `c`, no dia `d`, período `p`, na sala `s`.
 
-**D1 — salas concretas.** Uma linha de `salas.csv` com `quantidade = q` é expandida em `q` salas equivalentes, por exemplo `Sala Normal #1`, ..., `Sala Normal #q`. Os identificadores são internos; servem para aplicar diretamente a capacidade de R7 e para comparar salas em R9.
+    **D1 — salas concretas.** Uma linha de `salas.csv` com `quantidade = q` é expandida em `q` salas equivalentes, por exemplo `Sala Normal #1`, ..., `Sala Normal #q`. Os identificadores são internos; servem para aplicar diretamente a capacidade de R7 e para comparar salas em R9.
 
-**D2 — variável principal.** Foi escolhida a matriz binária `x` por ser próxima da formulação de alocação usada na disciplina. A variável auxiliar `y[t,c,d,p]` indica apenas a ocupação temporal da turma/disciplina, independentemente da sala.
+    **D2 — variável principal.** Foi escolhida a matriz binária `x` por ser próxima da formulação de alocação usada na disciplina. A variável auxiliar `y[t,c,d,p]` indica apenas a ocupação temporal da turma/disciplina, independentemente da sala.
 
-**D3 — blocos duplos.** R4 exige dois períodos consecutivos, mas não exige que os dois períodos usem a mesma sala. Não foi acrescentada essa restrição extra.
+    **D3 — blocos duplos.** R4 exige dois períodos consecutivos, mas não exige que os dois períodos usem a mesma sala. Não foi acrescentada essa restrição extra.
 
-**D4 — validação estrutural.** Antes de construir o modelo rejeita-se uma disciplina marcada como `duplo_periodo = sim` com carga semanal ímpar. Esta é uma decisão de qualidade dos dados e não uma nova interpretação de R8.
+    **D4 — validação estrutural.** Antes de construir o modelo rejeita-se uma disciplina marcada como `duplo_periodo = sim` com carga semanal ímpar. Esta é uma decisão de qualidade dos dados e não uma nova interpretação de R8.
 
-### Restrições
+    ### Restrições
 
-- **R1:** para cada turma e slot, `sum(x) <= 1`.
-- **R2:** para cada turma/disciplina, a soma semanal de `x` é exatamente a carga indicada no CSV.
-- **R3:** disciplinas normais têm no máximo um período por dia; disciplinas duplas têm no máximo um bloco por dia.
-- **R4:** a variável binária `b[t,c,d,p]` representa o início de um bloco duplo e liga `y` a exatamente dois períodos consecutivos.
-- **R5:** para cada professor e slot, a soma das suas aulas é no máximo 1.
-- **R6:** se `(professor,dia,periodo)` estiver nas exceções de disponibilidade, a respetiva ocupação é forçada a 0.
-- **R7:** variáveis associadas a salas incompatíveis são forçadas a 0; cada sala concreta recebe no máximo uma aula por slot.
-- **R8:** o modelo é construído a partir dos CSV, sem listas de turmas, disciplinas ou professores concretos no código.
+    - **R1:** para cada turma e slot, `sum(x) <= 1`.
+    - **R2:** para cada turma/disciplina, a soma semanal de `x` é exatamente a carga indicada no CSV.
+    - **R3:** disciplinas normais têm no máximo um período por dia; disciplinas duplas têm no máximo um bloco por dia.
+    - **R4:** a variável binária `b[t,c,d,p]` representa o início de um bloco duplo e liga `y` a exatamente dois períodos consecutivos.
+    - **R5:** para cada professor e slot, a soma das suas aulas é no máximo 1.
+    - **R6:** se `(professor,dia,periodo)` estiver nas exceções de disponibilidade, a respetiva ocupação é forçada a 0.
+    - **R7:** variáveis associadas a salas incompatíveis são forçadas a 0; cada sala concreta recebe no máximo uma aula por slot.
+    - **R8:** o modelo é construído a partir dos CSV, sem listas de turmas, disciplinas ou professores concretos no código.
     """)
     return
 
@@ -460,30 +460,30 @@ def _(cp_model):
 def _():
     # [LLM] Descrição do objetivo O1 e da decisão D5.
     mo.md(r"""
-## Objetivo O1 — minimizar buracos
+    ## Objetivo O1 — minimizar buracos
 
-A definição de **buraco** vem do enunciado: é cada período livre entre a primeira e a última aula diária de um professor.
+    A definição de **buraco** vem do enunciado: é cada período livre entre a primeira e a última aula diária de um professor.
 
-**D5 — decisão de modelação.** O objetivo é representado por quatro famílias de variáveis booleanas:
+    **D5 — decisão de modelação.** O objetivo é representado por quatro famílias de variáveis booleanas:
 
-- `ocupado[f,d,p]`: o professor tem uma aula nesse slot;
-- `tem_antes[f,d,p]`: existe pelo menos uma aula anterior nesse dia;
-- `tem_depois[f,d,p]`: existe pelo menos uma aula posterior nesse dia;
-- `buraco[f,d,p]`: existe aula antes e depois, mas o próprio período está livre.
+    - `ocupado[f,d,p]`: o professor tem uma aula nesse slot;
+    - `tem_antes[f,d,p]`: existe pelo menos uma aula anterior nesse dia;
+    - `tem_depois[f,d,p]`: existe pelo menos uma aula posterior nesse dia;
+    - `buraco[f,d,p]`: existe aula antes e depois, mas o próprio período está livre.
 
-As restrições implementam equivalências, e não apenas implicações, para impedir que o solver escolha valores artificiais para diminuir o objetivo. Em particular,
+    As restrições implementam equivalências, e não apenas implicações, para impedir que o solver escolha valores artificiais para diminuir o objetivo. Em particular,
 
-\[
-buraco \iff tem\_antes \land tem\_depois \land \neg ocupado.
-\]
+    \[
+    buraco \iff tem\_antes \land tem\_depois \land \neg ocupado.
+    \]
 
-A função objetivo é
+    A função objetivo é
 
-\[
-\min \sum_{f,d,p} buraco_{f,d,p}.
-\]
+    \[
+    \min \sum_{f,d,p} buraco_{f,d,p}.
+    \]
 
-R1–R8 permanecem inalterados; O1 é acrescentado ao modelo base.
+    R1–R8 permanecem inalterados; O1 é acrescentado ao modelo base.
     """)
     return
 
@@ -682,6 +682,8 @@ def _(cp_model):
 
     def resolver_modelo(modelo):
         solver = cp_model.CpSolver()
+        solver.parameters.random_seed = 0
+        solver.parameters.num_search_workers = 1
         estado = solver.Solve(modelo)
 
         return solver, estado
@@ -730,14 +732,13 @@ def _(cp_model):
     return (extrair_horario,)
 
 
-
 @app.cell
 def _():
     # [LLM] Contextualização da primeira execução do modelo base.
     mo.md(r"""
-## Execução inicial e validação
+    ## Execução inicial e validação
 
-Primeiro resolve-se apenas o problema de satisfação R1–R8 sobre `dados/`. Esta execução permite testar a formulação e produzir um horário de referência antes de acrescentar O1. O estado e o horário obtidos são apresentados diretamente pela célula seguinte; como ainda não existe função objetivo, um estado `OPTIMAL` nesta fase não significa que os buracos tenham sido otimizados.
+    Primeiro resolve-se apenas o problema de satisfação R1–R8 sobre `dados/`. Esta execução permite testar a formulação e produzir um horário de referência antes de acrescentar O1. O estado e o horário obtidos são apresentados diretamente pela célula seguinte; como ainda não existe função objetivo, um estado `OPTIMAL` nesta fase não significa que os buracos tenham sido otimizados.
     """)
     return
 
@@ -763,16 +764,15 @@ def _(carregar_dados, construir_modelo, extrair_horario, resolver_modelo):
     return dados, horario
 
 
-
 @app.cell
 def _():
     # [LLM] Descrição do validador independente.
     mo.md(r"""
-## Validação independente
+    ## Validação independente
 
-Uma solução devolvida pelo solver não é aceite sem verificação adicional. O validador abaixo relê os CSV e verifica diretamente o horário extraído, sem consultar o modelo CP-SAT, as variáveis `x`, `y`, `b` ou o estado do solver.
+    Uma solução devolvida pelo solver não é aceite sem verificação adicional. O validador abaixo relê os CSV e verifica diretamente o horário extraído, sem consultar o modelo CP-SAT, as variáveis `x`, `y`, `b` ou o estado do solver.
 
-São verificados R1–R7 e a consistência do resultado com os CSV para R8. A ausência de *hardcoding* é testada mais adiante através de um conjunto alternativo de CSV. Os resultados da validação são sempre produzidos pelas células de execução, evitando copiar manualmente estados ou contagens para o texto do relatório.
+    São verificados R1–R7 e a consistência do resultado com os CSV para R8. A ausência de *hardcoding* é testada mais adiante através de um conjunto alternativo de CSV. Os resultados da validação são sempre produzidos pelas células de execução, evitando copiar manualmente estados ou contagens para o texto do relatório.
     """)
     return
 
@@ -1000,7 +1000,6 @@ def contar_buracos(horario):
     return total_buracos, detalhe
 
 
-
 @app.function
 # [LLM] Apresentação concisa dos resultados do validador.
 def mostrar_validacao(resultado):
@@ -1028,14 +1027,13 @@ def _(horario, validar_horario):
     return
 
 
-
 @app.cell
 def _():
     # [LLM] Enquadramento dos testes negativos.
     mo.md(r"""
-## Testes negativos do validador
+    ## Testes negativos do validador
 
-Além da validação positiva, são criados horários deliberadamente inválidos para confirmar que o validador deteta violações de R1–R8. Estes testes são intencionalmente simples: não tentam isolar sempre uma única restrição. O critério de sucesso é o requisito alvo aparecer como violado; eventuais violações colaterais são mostradas no output.
+    Além da validação positiva, são criados horários deliberadamente inválidos para confirmar que o validador deteta violações de R1–R8. Estes testes são intencionalmente simples: não tentam isolar sempre uma única restrição. O critério de sucesso é o requisito alvo aparecer como violado; eventuais violações colaterais são mostradas no output.
     """)
     return
 
@@ -1115,16 +1113,16 @@ def _(dados, horario, validar_horario):
         assert detetado, f"O teste negativo de {requisito} não foi detetado."
 
     print("Todos os requisitos alvo foram detetados: True")
-    return (resumo_testes_negativos,)
+    return
 
 
 @app.cell
 def _():
     # [LLM] Enquadramento da execução de O1.
     mo.md(r"""
-## Execução de O1
+    ## Execução de O1
 
-Reconstrói-se o mesmo problema R1–R8 e acrescenta-se apenas O1. O horário otimizado é novamente verificado pelo validador independente. A célula de comparação apresenta, a partir da execução corrente, os buracos do horário sem objetivo, os do horário com O1, a soma das variáveis `buraco` e o valor da função objetivo.
+    Reconstrói-se o mesmo problema R1–R8 e acrescenta-se apenas O1. O horário otimizado é novamente verificado pelo validador independente. A célula de comparação apresenta, a partir da execução corrente, os buracos do horário sem objetivo, os do horário com O1, a soma das variáveis `buraco` e o valor da função objetivo.
     """)
     return
 
@@ -1242,37 +1240,35 @@ def _(horario, horario_o1, solver_o1, variaveis_o1):
     return
 
 
-
 @app.cell
 def _():
     # [LLM] Descrição da formalização de R9 e das decisões D6-D8.
     mo.md(r"""
-## R9 — construção incremental
+    ## R9 — construção incremental
 
-R9 parte de um horário existente **H0** e procura um novo horário **H1** quando os recursos mudam. Nesta implementação, `H0 = horario_o1`.
+    R9 parte de um horário existente **H0** e procura um novo horário **H1** quando os recursos mudam. Nesta implementação, `H0 = horario_o1`.
 
-**D6 — métrica de alteração.** Uma alocação antiga é um tempo letivo completo
+    **D6 — métrica de alteração.** Uma alocação antiga é um tempo letivo completo
 
-\[
-(turma, disciplina, dia, periodo, sala).
-\]
+    \[
+    (turma, disciplina, dia, periodo, sala).
+    \]
 
-Uma alocação de H0 é preservada se a mesma combinação existir em H1. Aulas novas que não existiam em H0 não contam como aulas antigas alteradas. Consequentemente, mover totalmente um bloco duplo conta como duas alterações.
+    Uma alocação de H0 é preservada se a mesma combinação existir em H1. Aulas novas que não existiam em H0 não contam como aulas antigas alteradas. Consequentemente, mover totalmente um bloco duplo conta como duas alterações.
 
-Se `A0` é o conjunto de alocações de H0, o número de alterações é
+    Se `A0` é o conjunto de alocações de H0, o número de alterações é
 
-\[
-M(H0,H1)=|A0|-\sum_{a\in A0} x_a^{H1}.
-\]
+    \[
+    M(H0,H1)=|A0|-\sum_{a\in A0} x_a^{H1}.
+    \]
 
-**D7 — estratégia incremental.** O modelo de `dados_v2` minimiza explicitamente `M(H0,H1)` e recebe H0 também como *hint*. O *hint* é apenas um ponto de partida sugerido ao solver; não é uma restrição nem substitui a função objetivo.
+    **D7 — estratégia incremental.** O modelo de `dados_v2` minimiza explicitamente `M(H0,H1)` e recebe H0 também como *hint*. O *hint* é apenas um ponto de partida sugerido ao solver; não é uma restrição nem substitui a função objetivo.
 
-**D8 — relação com O1.** O1 não participa no objetivo de H1. Em R9 a prioridade desta experiência é preservar o horário anterior, tal como permitido pelo enunciado.
+    **D8 — relação com O1.** O1 não participa no objetivo de H1. Em R9 a prioridade desta experiência é preservar o horário anterior, tal como permitido pelo enunciado.
 
-Para comparação foi construída uma **baseline** que resolve `dados_v2` desde zero apenas com R1–R8, sem utilizar H0 durante a resolução. As duas abordagens usam a mesma semente e uma única *worker* para tornar a medição mais reproduzível.
+    Para comparação foi construída uma **baseline** que resolve `dados_v2` desde zero apenas com R1–R8, sem utilizar H0 durante a resolução. As duas abordagens usam a mesma semente e uma única *worker* para tornar a medição mais reproduzível.
     """)
     return
-
 
 
 @app.cell
@@ -1395,7 +1391,6 @@ def _(construir_modelo, cp_model, extrair_horario):
         }
 
     return (
-        LIMITE_TEMPO_R9,
         NUM_WORKERS_R9,
         SEMENTE_R9,
         contar_alteracoes,
@@ -1489,16 +1484,16 @@ def _(
             "preservadas": alteracoes_zero["preservadas"],
         },
     }
-    return H0, dados_v2, resumo_r9
+    return H0, dados_v2
 
 
 @app.cell
 def _():
     # [LLM] Interpretação do cenário principal sem duplicar resultados numéricos.
     mo.md(r"""
-### Interpretação do cenário principal
+    ### Interpretação do cenário principal
 
-A célula anterior mostra os resultados efetivamente medidos para `dados → dados_v2`. A comparação relevante é feita em duas dimensões: tempo de resolução e número de alocações antigas preservadas. Como a instância é pequena e a medição temporal corresponde a uma execução, não se generaliza o desempenho a partir destes tempos. Os valores apresentados no output são a única fonte dos resultados experimentais.
+    A célula anterior mostra os resultados efetivamente medidos para `dados → dados_v2`. A comparação relevante é feita em duas dimensões: tempo de resolução e número de alocações antigas preservadas. Como a instância é pequena e a medição temporal corresponde a uma execução, não se generaliza o desempenho a partir destes tempos. Os valores apresentados no output são a única fonte dos resultados experimentais.
     """)
     return
 
@@ -1507,11 +1502,11 @@ A célula anterior mostra os resultados efetivamente medidos para `dados → dad
 def _():
     # [LLM] Enquadramento do cenário adicional de reparação.
     mo.md(r"""
-## Cenário controlado de reparação
+    ## Cenário controlado de reparação
 
-O cenário oficial pode não obrigar H0 a mudar. Para exercitar uma reparação real e, simultaneamente, testar R8 com outro conjunto de CSV, o notebook cria `dados_reparo/` a partir de `dados_v2/` e de uma aula real de H0.
+    O cenário oficial pode não obrigar H0 a mudar. Para exercitar uma reparação real e, simultaneamente, testar R8 com outro conjunto de CSV, o notebook cria `dados_reparo/` a partir de `dados_v2/` e de uma aula real de H0.
 
-As aulas são percorridas numa ordem determinística, dando prioridade a disciplinas sem bloco duplo. Para cada candidata acrescenta-se uma indisponibilidade do respetivo professor exatamente nesse dia e período. Se a instância ficar inviável, passa-se à candidata seguinte. É usada a **primeira candidata reparável**, não a que produz menos alterações. Depois aplica-se exatamente a mesma função incremental usada em `dados_v2`.
+    As aulas são percorridas numa ordem determinística, dando prioridade a disciplinas sem bloco duplo. Para cada candidata acrescenta-se uma indisponibilidade do respetivo professor exatamente nesse dia e período. Se a instância ficar inviável, passa-se à candidata seguinte. É usada a **primeira candidata reparável**, não a que produz menos alterações. Depois aplica-se exatamente a mesma função incremental usada em `dados_v2`.
     """)
     return
 
@@ -1669,59 +1664,59 @@ def _(
     assert validacao_reparo["R8_consistente_com_csv"]
     assert alteracoes_reparo["alteradas"] >= 1
     assert alteracoes_reparo["alteradas"] == objetivo_reparo
-
-    return cenario_reparo, dados_reparo
+    return
 
 
 @app.cell
 def _():
     # [LLM] Matriz de rastreabilidade, limitações, reprodução, uso de LLM e conclusão.
     mo.md(r"""
-## Matriz de rastreabilidade final
+    ## Matriz de rastreabilidade final
 
-| Item | Origem | Decisão de modelação / implementação | Contribuição da LLM | Evidência no notebook |
-|---|---|---|---|---|
-| R1 | Enunciado | soma das alocações da turma por slot `<= 1` | formalização e código | validador positivo + teste negativo |
-| R2 | Enunciado | carga semanal representada por igualdade exata | formalização e código | validador positivo + teste negativo |
-| R3 | Enunciado | normal: máx. 1 período/dia; dupla: máx. 1 bloco/dia | formalização e código | validador positivo + teste negativo |
-| R4 | Enunciado | início de bloco `b` e dois períodos consecutivos; D3 não exige mesma sala | alternativas, formalização e código | validador positivo + teste negativo |
-| R5 | Enunciado | máx. 1 aula/professor/slot | formalização e código | validador positivo + teste negativo |
-| R6 | Enunciado | ocupação proibida nas exceções dos CSV | formalização e código | validador, teste negativo e `dados_reparo` |
-| R7 | Enunciado | D1 expande quantidades em salas concretas; compatibilidade + exclusividade | proposta, discussão e código | validador positivo + teste negativo |
-| R8 | Enunciado | leitura parametrizada dos CSV; D4 rejeita carga ímpar numa disciplina dupla | carregador, validador e testes | consistência nos CSV + conjunto alternativo `dados_reparo` |
-| O1 | Enunciado | D5: `ocupado`, `tem_antes`, `tem_depois`, `buraco` | formalização, equivalências e código | contador independente comparado com o objetivo |
-| R9 | Enunciado | H0=`horario_o1`; D6 alteração por tempo letivo; D7 objetivo + hint; D8 O1 fora do objetivo | alternativas, formalização e código | cenário oficial + cenário de reparação |
+    | Item | Origem | Decisão de modelação / implementação | Contribuição da LLM | Evidência no notebook |
+    |---|---|---|---|---|
+    | R1 | Enunciado | soma das alocações da turma por slot `<= 1` | formalização e código | validador positivo + teste negativo |
+    | R2 | Enunciado | carga semanal representada por igualdade exata | formalização e código | validador positivo + teste negativo |
+    | R3 | Enunciado | normal: máx. 1 período/dia; dupla: máx. 1 bloco/dia | formalização e código | validador positivo + teste negativo |
+    | R4 | Enunciado | início de bloco `b` e dois períodos consecutivos; D3 não exige mesma sala | alternativas, formalização e código | validador positivo + teste negativo |
+    | R5 | Enunciado | máx. 1 aula/professor/slot | formalização e código | validador positivo + teste negativo |
+    | R6 | Enunciado | ocupação proibida nas exceções dos CSV | formalização e código | validador, teste negativo e `dados_reparo` |
+    | R7 | Enunciado | D1 expande quantidades em salas concretas; compatibilidade + exclusividade | proposta, discussão e código | validador positivo + teste negativo |
+    | R8 | Enunciado | leitura parametrizada dos CSV; D4 rejeita carga ímpar numa disciplina dupla | carregador, validador e testes | consistência nos CSV + conjunto alternativo `dados_reparo` |
+    | O1 | Enunciado | D5: `ocupado`, `tem_antes`, `tem_depois`, `buraco` | formalização, equivalências e código | contador independente comparado com o objetivo |
+    | R9 | Enunciado | H0=`horario_o1`; D6 alteração por tempo letivo; D7 objetivo + hint; D8 O1 fora do objetivo | alternativas, formalização e código | cenário oficial + cenário de reparação |
 
-## Limitações
+    ## Limitações
 
-- As salas equivalentes recebem identificadores artificiais (`#1`, `#2`, ...), introduzindo simetria entre salas do mesmo tipo.
-- A métrica D6 conta alterações por tempo letivo; deslocar um bloco duplo completo conta como duas alterações.
-- Os tempos de R9 são medidos numa instância pequena e numa execução, pelo que não sustentam conclusões gerais de desempenho.
-- O formato atual dos CSV não representa a indisponibilidade de uma sala apenas em períodos específicos.
-- Não foi realizada a experiência de escala apresentada como extensão opcional no enunciado específico.
+    - As salas equivalentes recebem identificadores artificiais (`#1`, `#2`, ...), introduzindo simetria entre salas do mesmo tipo.
+    - A métrica D6 conta alterações por tempo letivo; deslocar um bloco duplo completo conta como duas alterações.
+    - Os tempos de R9 são medidos numa instância pequena e numa execução, pelo que não sustentam conclusões gerais de desempenho.
+    - O formato atual dos CSV não representa a indisponibilidade de uma sala apenas em períodos específicos.
+    - Não foi realizada a experiência de escala apresentada como extensão opcional no enunciado específico.
 
-## Reprodutibilidade
+    ## Reprodutibilidade
 
-São necessários `horario_escolar.py` e as pastas `dados/` e `dados_v2/`. A pasta `dados_reparo/` é recriada automaticamente durante a execução. O cabeçalho declara `marimo` e `ortools`; as restantes bibliotecas usadas pertencem à biblioteca standard de Python.
+    São necessários `horario_escolar.py` e as pastas `dados/` e `dados_v2/`. A pasta `dados_reparo/` é recriada automaticamente durante a execução. O cabeçalho declara `marimo` e `ortools`; as restantes bibliotecas usadas pertencem à biblioteca standard de Python.
 
-Antes da entrega devem ser confirmadas as versões reais do ambiente:
+    O trabalho foi desenvolvido e executado num ambiente Conda dedicado (`logica`) com:
 
-```text
-python --version
-python -c "import marimo, ortools; print('marimo', marimo.__version__); print('ortools', ortools.__version__)"
-```
+    - Python 3.14.7
+    - Marimo 0.25.0
+    - OR-Tools 9.15.6755
 
-O ficheiro declara atualmente `requires-python = ">=3.14"`; este valor deve ser confirmado com a versão efetivamente usada pelo grupo. Para a experiência R9 usa-se semente fixa, uma única *worker* e nenhum limite explícito de tempo.
+    O cabeçalho do notebook declara `requires-python = ">=3.14"` e as dependências externas `marimo` e `ortools`.
 
-## Utilização de LLM
+    Para a experiência R9 usa-se semente fixa, uma única *worker* e nenhum limite explícito de tempo.
 
-O código Python deste notebook foi **maioritariamente gerado com auxílio de uma LLM**. As componentes geradas estão identificadas por comentários `[LLM]`. A LLM apoiou a interpretação dos requisitos, a formalização, a implementação, os testes e a organização do relatório. As decisões de modelação foram discutidas e revistas pelo grupo, e os resultados apresentados no notebook são produzidos pelas execuções efetuadas pelo grupo.
+    ## Utilização de LLM
 
-**Ligação para o diálogo LLM usado no desenvolvimento:** `[ADICIONAR LINK DA CONVERSA]`
+    O código Python deste notebook foi **maioritariamente gerado com auxílio de uma LLM**. As componentes geradas estão identificadas por comentários `[LLM]`. A LLM apoiou a interpretação dos requisitos, a formalização, a implementação, os testes e a organização do relatório. As decisões de modelação foram discutidas e revistas pelo grupo, e os resultados apresentados no notebook são produzidos pelas execuções efetuadas pelo grupo.
 
-## Conclusão
+    **Ligação para o diálogo LLM usado no desenvolvimento:** `https://chatgpt.com/share/6ac11bde-89d0-83eb-b1f5-61d5bbc4c7a2`
 
-A solução cobre R1–R8, O1 e R9, com validação independente e um conjunto alternativo de CSV. Os resultados quantitativos não são duplicados neste texto: ficam nos outputs das células que os calculam, evitando divergências entre o relatório e a execução final.
+    ## Conclusão
+
+    A solução cobre R1–R8, O1 e R9, com validação independente e um conjunto alternativo de CSV. Os resultados quantitativos não são duplicados neste texto: ficam nos outputs das células que os calculam, evitando divergências entre o relatório e a execução final.
     """)
     return
 
