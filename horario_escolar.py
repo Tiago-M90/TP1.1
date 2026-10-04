@@ -27,7 +27,9 @@ def _():
 
     A solução foi modelada como um problema de satisfação e otimização com **OR-Tools CP-SAT**. Esta escolha segue a abordagem de alocação estudada na disciplina: as decisões são representadas por variáveis booleanas e as condições do horário por restrições. O CP-SAT permite ainda definir funções objetivo e reutilizar uma solução anterior através de *hints*, o que é útil em O1 e R9.
 
-    Os dados concretos de turmas, disciplinas, professores e salas **não são escritos no modelo**. São lidos de `dados/`, `dados_v2/` e, no teste adicional de reparação, de `dados_reparo/`.
+    Os dados concretos de turmas, disciplinas, professores e salas **não são escritos no modelo**. São lidos de `dados/`, `dados_v2/` e, no teste adicional de reparação, de `dados_reparo/`. Para a leitura é usado o módulo `csv` da biblioteca standard: os ficheiros são pequenos e têm uma estrutura simples, pelo que não é necessário acrescentar a dependência `pandas`, e a transformação dos campos fica explícita no código.
+
+    O horário extraído é representado como uma **lista de dicionários**, uma estrutura simples que facilita a inspeção dos resultados, a validação independente e a comparação das alocações entre H0 e H1.
 
     ### Requisitos considerados
 
@@ -676,9 +678,9 @@ def adicionar_objetivo_buracos(model, dados, x):
 
 @app.cell
 def _(cp_model):
-    # [LLM] Função inicial de resolução CP-SAT gerada com auxílio de IA.
-    # Esta função apenas procura uma solução viável para R1-R8;
-    # O1 e R9 ainda não estão implementados.
+    # [LLM] Função de resolução CP-SAT gerada com auxílio de IA.
+    # A semente e o número de workers são fixados para tornar as
+    # execuções reproduzíveis nas mesmas condições de ambiente.
 
     def resolver_modelo(modelo):
         solver = cp_model.CpSolver()
@@ -745,6 +747,7 @@ def _():
 
 @app.cell
 def _(carregar_dados, construir_modelo, extrair_horario, resolver_modelo):
+    # [LLM] Execução inicial do modelo base e extração do horário.
     dados = carregar_dados("dados")
 
     modelo, x, y, b = construir_modelo(dados)
@@ -1018,6 +1021,7 @@ def mostrar_validacao(resultado):
 
 @app.cell
 def _(horario, validar_horario):
+    # [LLM] Execução do validador independente sobre o horário base.
     resultado_validacao = validar_horario(
         "dados",
         horario,
@@ -1167,6 +1171,7 @@ def _(construir_modelo, dados, extrair_horario, resolver_modelo):
 
 @app.cell
 def _(horario_o1, validar_horario):
+    # [LLM] Validação independente do horário obtido com O1.
     resultado_validacao_o1 = validar_horario(
         "dados",
         horario_o1,
@@ -1180,6 +1185,8 @@ def _(horario_o1, validar_horario):
 
 @app.cell
 def _(horario, horario_o1, solver_o1, variaveis_o1):
+    # [LLM] Comparação entre o contador independente, as variáveis de O1
+    # e o valor da função objetivo reportado pelo solver.
     # Contagem do horário anteriormente obtido sem O1.
     buracos_sem_objetivo, detalhe_sem_objetivo = contar_buracos(
         horario
@@ -1265,6 +1272,8 @@ def _():
     **D7 — estratégia incremental.** O modelo de `dados_v2` minimiza explicitamente `M(H0,H1)` e recebe H0 também como *hint*. O *hint* é apenas um ponto de partida sugerido ao solver; não é uma restrição nem substitui a função objetivo.
 
     **D8 — relação com O1.** O1 não participa no objetivo de H1. Em R9 a prioridade desta experiência é preservar o horário anterior, tal como permitido pelo enunciado.
+
+    O mecanismo incremental não depende apenas do cenário `dados_v2`: uma nova indisponibilidade de professor pode ser acrescentada a `disponibilidade_excecoes.csv`, um aumento de disponibilidade corresponde a remover uma exceção, uma nova turma pode ser acrescentada a `turmas.csv` e a substituição de um professor pode ser feita em `disciplinas.csv`. Uma redução permanente da capacidade de salas pode ser representada diminuindo a respetiva `quantidade` em `salas.csv`; o formato atual, porém, não permite indicar que uma sala fica indisponível apenas em determinados períodos.
 
     Para comparação foi construída uma **baseline** que resolve `dados_v2` desde zero apenas com R1–R8, sem utilizar H0 durante a resolução. As duas abordagens usam a mesma semente e uma única *worker* para tornar a medição mais reproduzível.
     """)
@@ -1712,7 +1721,7 @@ def _():
 
     O código Python deste notebook foi **maioritariamente gerado com auxílio de uma LLM**. As componentes geradas estão identificadas por comentários `[LLM]`. A LLM apoiou a interpretação dos requisitos, a formalização, a implementação, os testes e a organização do relatório. As decisões de modelação foram discutidas e revistas pelo grupo, e os resultados apresentados no notebook são produzidos pelas execuções efetuadas pelo grupo.
 
-    **Ligação para o diálogo LLM usado no desenvolvimento:** `https://chatgpt.com/share/6ac11bde-89d0-83eb-b1f5-61d5bbc4c7a2`
+    **Ligação para o diálogo LLM usado no desenvolvimento:** [Diálogo completo com a LLM](https://chatgpt.com/share/6ac11bde-89d0-83eb-b1f5-61d5bbc4c7a2)
 
     ## Conclusão
 
